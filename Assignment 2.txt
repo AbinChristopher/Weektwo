@@ -1,0 +1,52 @@
+USE [Industryconnectweek2]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+/*Add "Full Name" Column to CustomerSales View*/
+ALTER VIEW [dbo].[CustomerSales] AS
+SELECT 
+    c.Id AS 'Customer Id', 
+    c.FirstName, 
+    c.LastName, 
+    CONCAT(c.FirstName, ' ', c.LastName) AS 'Full Name',
+    s.DateSold, 
+    p.[Name] AS 'Product Name', 
+    p.Price,
+    [dbo].[GetCustomerAmount](c.Id) AS 'Total Purchases'
+FROM Customer c
+LEFT JOIN Sale s ON c.Id = s.CustomerId
+LEFT JOIN Product p ON s.ProductId = p.Id;
+
+
+/* Create a Function to Calculate Age from Date of Birth*/
+GO
+CREATE FUNCTION [dbo].[GetAge] (@DateOfBirth DATE)
+RETURNS INT
+AS
+BEGIN
+    RETURN DATEDIFF(YEAR, @DateOfBirth, GETDATE()) 
+           - CASE WHEN (MONTH(@DateOfBirth) > MONTH(GETDATE())) 
+                   OR (MONTH(@DateOfBirth) = MONTH(GETDATE()) AND DAY(@DateOfBirth) > DAY(GETDATE())) 
+                THEN 1 ELSE 0 END;
+END;
+
+
+/*Create Store Table for Sale Locations*/
+GO
+CREATE TABLE [dbo].[Store] (
+    [Id] INT IDENTITY(1,1) PRIMARY KEY,
+    [Name] NVARCHAR(100) NOT NULL,
+    [Location] NVARCHAR(255) NOT NULL
+);
+
+
+/*Add Store Reference to Sale Table*/
+GO
+ALTER TABLE [dbo].[Sale]
+ADD [StoreId] INT NULL;
+ALTER TABLE [dbo].[Sale]
+ADD CONSTRAINT FK_Sale_Store FOREIGN KEY (StoreId) REFERENCES [dbo].[Store](Id);
+
