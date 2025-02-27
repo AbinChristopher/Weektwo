@@ -21,17 +21,45 @@ LEFT JOIN Sale s ON c.Id = s.CustomerId
 LEFT JOIN Product p ON s.ProductId = p.Id;
 
 
+/* Start of changes by Abin Date:27/02/2025 :Modified existing function for calculating age based on customer id*/
 /* Create a Function to Calculate Age from Date of Birth*/
 GO
-CREATE FUNCTION [dbo].[GetAge] (@DateOfBirth DATE)
+DROP FUNCTION IF EXISTS [dbo].[GetAge];
+GO
+CREATE FUNCTION [dbo].[GetAge] (@CustomerID INT)
 RETURNS INT
 AS
 BEGIN
-    RETURN DATEDIFF(YEAR, @DateOfBirth, GETDATE()) 
-           - CASE WHEN (MONTH(@DateOfBirth) > MONTH(GETDATE())) 
-                   OR (MONTH(@DateOfBirth) = MONTH(GETDATE()) AND DAY(@DateOfBirth) > DAY(GETDATE())) 
-                THEN 1 ELSE 0 END;
+    DECLARE @DateOfBirth DATE;
+    
+    SELECT @DateOfBirth = DateOfBirth FROM [dbo].[Customer] WHERE Id = @CustomerID;
+		IF @DateOfBirth IS NULL
+			RETURN NULL;
+			RETURN DATEDIFF(YEAR, @DateOfBirth, GETDATE()) - 
+			
+		CASE 
+			WHEN (MONTH(@DateOfBirth) > MONTH(GETDATE())) 
+                   	OR (MONTH(@DateOfBirth) = MONTH(GETDATE()) AND DAY(@DateOfBirth) > DAY(GETDATE())) 
+				THEN 1 
+				ELSE 0 
 END;
+
+/*To view Age */
+
+SELECT dbo.GetAge(1) as Age; /* Based on customer Id*/
+
+/*To view All customer's Age  Based on customer ID* only selecting all since there are few entries */
+
+GO
+SELECT
+    Id, 
+    FirstName, 
+    LastName, 
+    DateOfBirth, 
+    dbo.GetAge(Id) AS Age
+FROM [dbo].[Customer] ; 
+
+/* End of changes by Abin Date:27/02/2025 :Modified existing function for calculating age based on customer id*/
 
 
 /*Create Store Table for Sale Locations*/
